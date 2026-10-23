@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ganesh Shop – Your Trusted Kirana Store</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            saffron: { 50:'#fff7ed', 100:'#ffedd5', 200:'#fed7aa', 300:'#fdba74', 400:'#fb923c', 500:'#f97316', 600:'#ea580c', 700:'#c2410c', 800:'#9a3412', 900:'#7c2d12' },
+            leaf:    { 50:'#f0fdf4', 100:'#dcfce7', 200:'#bbf7d0', 300:'#86efac', 400:'#4ade80', 500:'#22c55e', 600:'#16a34a', 700:'#15803d', 800:'#166534', 900:'#14532d' },
+          },
+          fontFamily: { poppins: ['Poppins','sans-serif'], baloo: ['Baloo 2','cursive'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { scroll-behavior: smooth; }
+    body { font-family: 'Poppins', sans-serif; background: #fffbf5; }
+    .logo-font { font-family: 'Baloo 2', cursive; }
+    .nav-link { transition: color 0.2s; }
+    .nav-link:hover { color: #f97316; }
+    .nav-link.active { color: #f97316; border-bottom: 2px solid #f97316; }
+    .product-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(249,115,22,0.15); }
+    .category-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .category-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .cart-drawer { transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+    .cart-drawer.open { transform: translateX(0); }
+    .cart-drawer.closed { transform: translateX(100%); }
+    .overlay { transition: opacity 0.3s; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .badge { animation: bounce-in 0.3s ease; }
+    @keyframes bounce-in { 0%{transform:scale(0)} 60%{transform:scale(1.3)} 100%{transform:scale(1)} }
+    .toast { animation: slide-up 0.4s ease, fade-out 0.4s ease 2s forwards; }
+    @keyframes slide-up { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+    @keyframes fade-out { to{opacity:0;pointer-events:none} }
+    .hero-pattern { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f97316' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+    .whatsapp-btn { background: #25D366; }
+    .whatsapp-btn:hover { background: #1da851; }
+    input[type=range] { accent-color: #f97316; }
+    .star { color: #fbbf24; }
+    .search-highlight { background: #fef3c7; border-radius: 2px; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- ===================== TOAST ===================== -->
+<div id="toast-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center pointer-events-none"></div>
+
+<!-- ===================== CART OVERLAY ===================== -->
+<div id="cart-overlay" class="overlay fixed inset-0 bg-black/40 z-40 opacity-0 pointer-events-none" onclick="closeCart()"></div>
+
+<!-- ===================== CART DRAWER ===================== -->
+<div id="cart-drawer" class="cart-drawer closed fixed top-0 right-0 h-full w-full sm:w-96 bg-white z-50 shadow-2xl flex flex-col">
+  <div class="flex items-center justify-between p-4 border-b bg-saffron-500">
+    <div class="flex items-center gap-2 text-white">
+      <span class="material-symbols-outlined text-2xl">shopping_cart</span>
+      <h2 class="logo-font text-xl font-bold">Your Cart</h2>
+    </div>
+    <button onclick="closeCart()" class="text-white hover:text-orange-200 transition-colors">
+      <span class="material-symbols-outlined text-2xl">close</span>
+    </button>
+  </div>
+  <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+  <div id="cart-empty" class="flex-1 flex flex-col items-center justify-center text-gray-400 gap-3 hidden">
+    <span class="material-symbols-outlined text-6xl">shopping_cart</span>
+    <p class="text-lg font-medium">Your cart is empty</p>
+    <p class="text-sm">Add some items to get started!</p>
+  </div>
+  <div id="cart-footer" class="border-t p-4 bg-gray-50">
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-gray-600 font-medium">Subtotal:</span>
+      <span id="cart-total" class="text-xl font-bold text-saffron-600">₹0</span>
+    </div>
+    <button onclick="checkout()" class="w-full bg-leaf-600 hover:bg-leaf-700 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+      <span class="material-symbols-outlined">shopping_bag</span>
+      Place Order via WhatsApp
+    </button>
+    <button onclick="clearCart()" class="w-full mt-2 text-red-500 hover:text-red-700 text-sm font-medium py-1 transition-colors">
+      Clear Cart
+    </button>
+  </div>
+</div>
+
+<!-- ===================== HEADER ===================== -->
+<header class="sticky top-0 z-30 bg-white shadow-md">
+  <!-- Top bar -->
+  <div class="bg-saffron-500 text-white text-xs py-1.5 px-4 flex flex-col sm:flex-row items-center justify-between gap-1">
+    <div class="flex items-center gap-4">
+      <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">call</span> +91 98765 43210</span>
+      <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> Mon–Sat: 7AM–9PM | Sun: 8AM–7PM</span>
+    </div>
+    <div class="flex items-center gap-1">
+      <span class="material-symbols-outlined text-sm">location_on</span>
+      <span>Shivaji Nagar, Pune – 411005</span>
+    </div>
+  </div>
+  <!-- Main nav -->
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+    <!-- Logo -->
+    <div class="flex items-center gap-3 cursor-pointer" onclick="showSection('home')">
+      <div class="w-11 h-11 bg-gradient-to-br from-saffron-400 to-saffron-600 rounded-full flex items-center justify-center shadow-md">
+        <span class="material-symbols-outlined text-white text-2xl">storefront</span>
+      </div>
+      <div>
+        <h1 class="logo-font text-2xl font-extrabold text-saffron-600 leading-tight">Ganesh Shop</h1>
+        <p class="text-xs text-gray-500 -mt-1">Your Trusted Kirana Store</p>
+      </div>
+    </div>
+    <!-- Search -->
+    <div class="hidden md:flex flex-1 max-w-md relative">
+      <input id="search-input" type="text" placeholder="Search for products, brands..." 
+        class="w-full pl-10 pr-4 py-2.5 border-2 border-orange-200 rounded-xl focus:outline-none focus:border-saffron-400 text-sm bg-orange-50"
+        oninput="handleSearch(this.value)" onfocus="showSection('products')" />
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-saffron-400 text-xl">search</span>
+    </div>
+    <!-- Nav links + Cart -->
+    <div class="flex items-center gap-4">
+      <nav class="hidden lg:flex items-center gap-5 text-sm font-medium text-gray-700">
+        <a class="nav-link active" href="#" onclick="showSection('home'); setActive(this)">Home</a>
+        <a class="nav-link" href="#" onclick="showSection('categories'); setActive(this)">Categories</a>
+        <a class="nav-link" href="#" onclick="showSection('products'); setActive(this)">Products</a>
+        <a class="nav-link" href="#" onclick="showSection('about'); setActive(this)">About</a>
+        <a class="nav-link" href="#" onclick="showSection('contact'); setActive(this)">Contact</a>
+      </nav>
+      <button onclick="openCart()" class="relative bg-saffron-500 hover:bg-saffron-600 text-white p-2.5 rounded-xl transition-colors shadow-md">
+        <span class="material-symbols-outlined text-xl">shopping_cart</span>
+        <span id="cart-badge" class="badge absolute -top-2 -right-2 bg-leaf-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold hidden">0</span>
+      </button>
+      <!-- Mobile menu -->
+      <button onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-lg hover:bg-orange-50">
+        <span class="material-symbols-outlined text-gray-700">menu</span>
+      </button>
+    </div>
+  </div>
+  <!-- Mobile nav -->
+  <div id="mobile-menu" class="hidden lg:hidden border-t bg-white px-4 pb-3">
+    <div class="relative mb-3 mt-2">
+      <input id="search-mobile" type="text" placeholder="Search products..." 
+        class="w-full pl-10 pr-4 py-2.5 border-2 border-orange-200 rounded-xl focus:outline-none focus:border-saffron-400 text-sm bg-orange-50"
+        oninput="handleSearch(this.value)" onfocus="showSection('products')" />
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-saffron-400 text-xl">search</span>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button onclick="showSection('home');toggleMobileMenu()" class="px-4 py-2 rounded-lg bg-orange-50 text-sm font-medium text-gray-700 hover:bg-saffron-100">Home</button>
+      <button onclick="showSection('categories');toggleMobileMenu()" class="px-4 py-2 rounded-lg bg-orange-50 text-sm font-medium text-gray-700 hover:bg-saffron-100">Categories</button>
+      <button onclick="showSection('products');toggleMobileMenu()" class="px-4 py-2 rounded-lg bg-orange-50 text-sm font-medium text-gray-700 hover:bg-saffron-100">Products</button>
+      <button onclick="showSection('about');toggleMobileMenu()" class="px-4 py-2 rounded-lg bg-orange-50 text-sm font-medium text-gray-700 hover:bg-saffron-100">About</button>
+      <button onclick="showSection('contact');toggleMobileMenu()" class="px-4 py-2 rounded-lg bg-orange-50 text-sm font-medium text-gray-700 hover:bg-saffron-100">Contact</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== MAIN ===================== -->
+<main class="max-w-7xl mx-auto px-4 py-6">
+
+  <!-- ===== HOME SECTION ===== -->
+  <section id="section-home" class="section active">
+    <!-- Hero -->
+    <div class="hero-pattern rounded-2xl bg-gradient-to-r from-saffron-50 via-white to-leaf-50 border border-orange-100 p-8 md:p-12 mb-10 flex flex-col md:flex-row items-center gap-8">
+      <div class="flex-1">
+        <div class="inline-flex items-center gap-2 bg-saffron-100 text-saffron-700 px-4 py-1 rounded-full text-sm font-medium mb-4">
+          <span class="material-symbols-outlined text-base">star</span>
+          Pune's Most Loved Kirana Store
+        </div>
+        <h2 class="logo-font text-4xl md:text-5xl font-extrabold text-gray-800 leading-tight mb-3">
+          Welcome to<br/>
+          <span class="text-saffron-500">Ganesh Shop! 🙏</span>
+        </h2>
+        <p class="text-gray-600 text-lg mb-6 leading-relaxed">
+          Your one-stop destination for all daily groceries, fresh staples, household essentials, and more — at the best prices in your neighbourhood.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <button onclick="showSection('products')" class="bg-saffron-500 hover:bg-saffron-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-orange-200 flex items-center gap-2">
+            <span class="material-symbols-outlined">local_grocery_store</span>
+            Shop Now
+          </button>
+          <a href="https://wa.me/919876543210?text=Hi!%20I%20want%20to%20order%20from%20Ganesh%20Shop" target="_blank"
+            class="whatsapp-btn text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2">
+            <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.116 1.524 5.849L.057 23.117a.5.5 0 0 0 .612.625l5.457-1.432A11.942 11.942 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.796 9.796 0 0 1-5.031-1.384l-.361-.214-3.738.98.999-3.638-.234-.374A9.799 9.799 0 0 1 2.182 12C2.182 6.572 6.572 2.182 12 2.182S21.818 6.572 21.818 12 17.428 21.818 12 21.818z"/></svg>
+            Order on WhatsApp
+          </a>
+        </div>
+      </div>
+      <div class="hidden md:block text-9xl select-none animate-bounce" style="animation-duration:3s">🛒</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <div class="bg-white border border-orange-100 rounded-xl p-4 text-center shadow-sm">
+        <div class="text-3xl font-bold text-saffron-500 logo-font">500+</div>
+        <div class="text-gray-600 text-sm mt-1">Products</div>
+      </div>
+      <div class="bg-white border border-orange-100 rounded-xl p-4 text-center shadow-sm">
+        <div class="text-3xl font-bold text-leaf-600 logo-font">15+</div>
+        <div class="text-gray-600 text-sm mt-1">Years Experience</div>
+      </div>
+      <div class="bg-white border border-orange-100 rounded-xl p-4 text-center shadow-sm">
+        <div class="text-3xl font-bold text-saffron-500 logo-font">2000+</div>
+        <div class="text-gray-600 text-sm mt-1">Happy Customers</div>
+      </div>
+      <div class="bg-white border border-orange-100 rounded-xl p-4 text-center shadow-sm">
+        <div class="text-3xl font-bold text-leaf-600 logo-font">100%</div>
+        <div class="text-gray-600 text-sm mt-1">Fresh Guarantee</div>
+      </div>
+    </div>
+
+    <!-- Categories preview -->
+    <div class="mb-10">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="logo-font text-2xl font-bold text-gray-800">Shop by Category</h3>
+        <button onclick="showSection('categories')" class="text-saffron-500 hover:text-saffron-700 text-sm font-medium flex items-center gap-1">
+          View All <span class="material-symbols-outlined text-base">arrow_forward</span>
+        </button>
+      </div>
+      <div id="home-categories" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+    </div>
+
+    <!-- Featured products -->
+    <div class="mb-10">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="logo-font text-2xl font-bold text-gray-800">Featured Products</h3>
+        <button onclick="showSection('products')" class="text-saffron-500 hover:text-saffron-700 text-sm font-medium flex items-center gap-1">
+          View All <span class="material-symbols-outlined text-base">arrow_forward</span>
+        </button>
+      </div>
+      <div id="featured-products" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+    </div>
+
+    <!-- Why us -->
+    <div class="bg-gradient-to-r from-leaf-50 to-saffron-50 rounded-2xl border border-green-100 p-8 mb-8">
+      <h3 class="logo-font text-2xl font-bold text-gray-800 text-center mb-6">Why Shop with Us?</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div class="text-center">
+          <div class="w-14 h-14 bg-saffron-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <span class="material-symbols-outlined text-saffron-500 text-2xl">verified</span>
+          </div>
+          <h4 class="font-semibold text-gray-800 text-sm mb-1">Quality Assured</h4>
+          <p class="text-xs text-gray-500">All products are handpicked for quality</p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 bg-leaf-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <span class="material-symbols-outlined text-leaf-600 text-2xl">local_offer</span>
+          </div>
+          <h4 class="font-semibold text-gray-800 text-sm mb-1">Best Prices</h4>
+          <p class="text-xs text-gray-500">Lowest rates guaranteed in the area</p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 bg-saffron-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <span class="material-symbols-outlined text-saffron-500 text-2xl">delivery_truck_speed</span>
+          </div>
+          <h4 class="font-semibold text-gray-800 text-sm mb-1">Home Delivery</h4>
+          <p class="text-xs text-gray-500">Free delivery above ₹300 order</p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 bg-leaf-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <span class="material-symbols-outlined text-leaf-600 text-2xl">support_agent</span>
+          </div>
+          <h4 class="font-semibold text-gray-800 text-sm mb-1">Friendly Service</h4>
+          <p class="text-xs text-gray-500">Always here to help & guide you</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CATEGORIES SECTION ===== -->
+  <section id="section-categories" class="section">
+    <div class="mb-6">
+      <h2 class="logo-font text-3xl font-bold text-gray-800 mb-1">All Categories</h2>
+      <p class="text-gray-500">Browse our wide range of product categories</p>
+    </div>
+    <div id="all-categories" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+  </section>
+
+  <!-- ===== PRODUCTS SECTION ===== -->
+  <section id="section-products" class="section">
+    <div class="flex flex-col md:flex-row gap-4 mb-6 items-start md:items-center justify-between">
+      <div>
+        <h2 class="logo-font text-3xl font-bold text-gray-800 mb-1" id="products-title">All Products</h2>
+        <p class="text-gray-500 text-sm" id="products-subtitle">Showing all available products</p>
+      </div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <label class="text-sm text-gray-600 font-medium">Filter:</label>
+        <select id="category-filter" onchange="filterByCategory(this.value)"
+          class="border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-saffron-400 bg-white">
+          <option value="all">All Categories</option>
+        </select>
+        <select id="sort-filter" onchange="sortProducts(this.value)"
+          class="border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-saffron-400 bg-white">
+          <option value="default">Sort by</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="name-asc">Name: A to Z</option>
+        </select>
+      </div>
+    </div>
+    <div id="all-products" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+    <div id="no-results" class="hidden text-center py-20 text-gray-400">
+      <span class="material-symbols-outlined text-6xl mb-4 block">search_off</span>
+      <p class="text-lg font-medium">No products found</p>
+      <p class="text-sm">Try a different search or category</p>
+    </div>
+  </section>
+
+  <!-- ===== ABOUT SECTION ===== -->
+  <section id="section-about" class="section">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-10">
+        <div class="w-24 h-24 bg-gradient-to-br from-saffron-400 to-saffron-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-200">
+          <span class="material-symbols-outlined text-white text-4xl">storefront</span>
+        </div>
+        <h2 class="logo-font text-3xl font-bold text-gray-800 mb-2">About Ganesh Shop</h2>
+        <p class="text-gray-500">Serving the community since 2009</p>
+      </div>
+      <div class="grid md:grid-cols-2 gap-8 mb-10">
+        <div class="bg-white rounded-2xl border border-orange-100 p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-saffron-100 rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-saffron-500">history</span>
+            </div>
+            <h3 class="font-bold text-gray-800 text-lg">Our Story</h3>
+          </div>
+          <p class="text-gray-600 leading-relaxed text-sm">
+            Ganesh Shop was started in 2009 by Ramesh Shewale with a dream to serve the people of Shivaji Nagar with quality groceries at affordable prices. What started as a small corner shop has now grown into one of the most trusted Kirana stores in the locality.
+          </p>
+          <p class="text-gray-600 leading-relaxed text-sm mt-3">
+            We believe that every family deserves the best quality at fair prices — and we live by this every single day. Our relationships with our customers are what drive us forward.
+          </p>
+        </div>
+        <div class="bg-white rounded-2xl border border-orange-100 p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-leaf-100 rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-leaf-600">gavel</span>
+            </div>
+            <h3 class="font-bold text-gray-800 text-lg">Our Promise</h3>
+          </div>
+          <ul class="space-y-3 text-sm text-gray-600">
+            <li class="flex items-start gap-2"><span class="material-symbols-outlined text-leaf-500 text-base mt-0.5">check_circle</span>Always fresh and quality products</li>
+            <li class="flex items-start gap-2"><span class="material-symbols-outlined text-leaf-500 text-base mt-0.5">check_circle</span>Honest weight and measurement always</li>
+            <li class="flex items-start gap-2"><span class="material-symbols-outlined text-leaf-500 text-base mt-0.5">check_circle</span>No hidden charges — price as marked</li>
+            <li class="flex items-start gap-2"><span class="material-symbols-outlined text-leaf-500 text-base mt-0.5">check_circle</span>Free home delivery on orders above ₹300</li>
+            <li class="flex items-start gap-2"><span class="material-symbols-outlined text-leaf-500 text-base mt-0.5">check_circle</span>Easy WhatsApp ordering & door delivery</li>
+            <li class="flex items-start gap-2"><span class="material-symbols-outlined text-leaf-500 text-base mt-0.5">check_circle</span>Accept UPI, Cash & all payment modes</li>
+          </ul>
+        </div>
+      </div>
+      <div class="bg-gradient-to-r from-saffron-50 to-leaf-50 rounded-2xl border border-orange-100 p-6">
+        <h3 class="font-bold text-gray-800 text-lg mb-4 text-center">Store Information</h3>
+        <div class="grid sm:grid-cols-3 gap-4 text-center">
+          <div>
+            <span class="material-symbols-outlined text-saffron-500 text-2xl mb-1 block">schedule</span>
+            <p class="font-semibold text-gray-800 text-sm">Opening Hours</p>
+            <p class="text-xs text-gray-500 mt-1">Mon–Sat: 7:00 AM – 9:00 PM</p>
+            <p class="text-xs text-gray-500">Sun: 8:00 AM – 7:00 PM</p>
+          </div>
+          <div>
+            <span class="material-symbols-outlined text-leaf-600 text-2xl mb-1 block">payments</span>
+            <p class="font-semibold text-gray-800 text-sm">Payment Accepted</p>
+            <p class="text-xs text-gray-500 mt-1">Cash, UPI, PhonePe</p>
+            <p class="text-xs text-gray-500">Google Pay, Paytm</p>
+          </div>
+          <div>
+            <span class="material-symbols-outlined text-saffron-500 text-2xl mb-1 block">local_shipping</span>
+            <p class="font-semibold text-gray-800 text-sm">Home Delivery</p>
+            <p class="text-xs text-gray-500 mt-1">Free above ₹300</p>
+            <p class="text-xs text-gray-500">Within 2 km radius</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACT SECTION ===== -->
+  <section id="section-contact" class="section">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-8">
+        <h2 class="logo-font text-3xl font-bold text-gray-800 mb-2">Get in Touch</h2>
+        <p class="text-gray-500">We're always here to help you!</p>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <div class="space-y-4">
+          <div class="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm flex items-start gap-4">
+            <div class="w-12 h-12 bg-saffron-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-saffron-500 text-2xl">location_on</span>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800 mb-1">Our Address</h4>
+              <p class="text-gray-600 text-sm">Shop No. 5, Ganesh Market,<br/>Shivaji Nagar, Pune – 411005<br/>Maharashtra, India</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm flex items-start gap-4">
+            <div class="w-12 h-12 bg-leaf-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-leaf-600 text-2xl">call</span>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800 mb-1">Phone Numbers</h4>
+              <a href="tel:+919876543210" class="text-saffron-600 text-sm hover:underline block">+91 98765 43210</a>
+              <a href="tel:+919988776655" class="text-saffron-600 text-sm hover:underline block">+91 99887 76655</a>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm flex items-start gap-4">
+            <div class="w-12 h-12 bg-saffron-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-saffron-500 text-2xl">schedule</span>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800 mb-1">Opening Hours</h4>
+              <p class="text-gray-600 text-sm">Monday – Saturday: <strong>7:00 AM – 9:00 PM</strong></p>
+              <p class="text-gray-600 text-sm">Sunday: <strong>8:00 AM – 7:00 PM</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="bg-white rounded-2xl border border-orange-100 p-6 shadow-sm">
+            <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined text-saffron-500">chat</span>
+              Send us a Message
+            </h4>
+            <form onsubmit="sendMessage(event)" class="space-y-3">
+              <input type="text" placeholder="Your Name" required
+                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-saffron-400"/>
+              <input type="tel" placeholder="Your Phone Number" required
+                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-saffron-400"/>
+              <textarea rows="3" placeholder="Your message or order..." required
+                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-saffron-400 resize-none"></textarea>
+              <button type="submit"
+                class="w-full bg-saffron-500 hover:bg-saffron-600 text-white font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-base">send</span> Send Message
+              </button>
+            </form>
+          </div>
+          <a href="https://wa.me/919876543210" target="_blank"
+            class="whatsapp-btn text-white rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <svg class="w-10 h-10 fill-white flex-shrink-0" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.116 1.524 5.849L.057 23.117a.5.5 0 0 0 .612.625l5.457-1.432A11.942 11.942 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.796 9.796 0 0 1-5.031-1.384l-.361-.214-3.738.98.999-3.638-.234-.374A9.799 9.799 0 0 1 2.182 12C2.182 6.572 6.572 2.182 12 2.182S21.818 6.572 21.818 12 17.428 21.818 12 21.818z"/></svg>
+            <div>
+              <p class="font-bold text-base">Chat on WhatsApp</p>
+              <p class="text-sm text-green-100">Quick replies • Easy ordering • 7AM–9PM</p>
+            </div>
+          </a>
+        </div>
+      </div>
+      <!-- Map placeholder -->
+      <div class="bg-white rounded-2xl border border-orange-100 overflow-hidden shadow-sm">
+        <div class="h-48 bg-gradient-to-br from-orange-50 to-green-50 flex flex-col items-center justify-center text-gray-400 gap-2">
+          <span class="material-symbols-outlined text-5xl text-saffron-300">map</span>
+          <p class="font-medium">Shivaji Nagar, Pune – 411005</p>
+          <a href="https://maps.google.com/?q=Shivaji+Nagar+Pune" target="_blank"
+            class="text-saffron-500 hover:underline text-sm flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">open_in_new</span>Open in Google Maps
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="bg-gray-900 text-gray-300 mt-16">
+  <div class="max-w-7xl mx-auto px-4 py-10">
+    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+      <div class="sm:col-span-2 md:col-span-1">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-9 h-9 bg-saffron-500 rounded-full flex items-center justify-center">
+            <span class="material-symbols-outlined text-white text-lg">storefront</span>
+          </div>
+          <span class="logo-font text-xl font-bold text-white">Ganesh Shop</span>
+        </div>
+        <p class="text-xs leading-relaxed text-gray-400">Your trusted neighbourhood Kirana store serving fresh quality groceries since 2009. Family-run with love ❤️</p>
+      </div>
+      <div>
+        <h4 class="font-semibold text-white mb-3 text-sm">Quick Links</h4>
+        <ul class="space-y-2 text-xs text-gray-400">
+          <li><a href="#" onclick="showSection('home')" class="hover:text-saffron-400 transition-colors">Home</a></li>
+          <li><a href="#" onclick="showSection('products')" class="hover:text-saffron-400 transition-colors">All Products</a></li>
+          <li><a href="#" onclick="showSection('categories')" class="hover:text-saffron-400 transition-colors">Categories</a></li>
+          <li><a href="#" onclick="showSection('about')" class="hover:text-saffron-400 transition-colors">About Us</a></li>
+          <li><a href="#" onclick="showSection('contact')" class="hover:text-saffron-400 transition-colors">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold text-white mb-3 text-sm">Categories</h4>
+        <ul class="space-y-2 text-xs text-gray-400" id="footer-categories"></ul>
+      </div>
+      <div>
+        <h4 class="font-semibold text-white mb-3 text-sm">Contact Us</h4>
+        <div class="space-y-2 text-xs text-gray-400">
+          <p class="flex items-start gap-2"><span class="material-symbols-outlined text-saffron-400 text-sm mt-0.5">location_on</span>Shivaji Nagar, Pune 411005</p>
+          <p class="flex items-center gap-2"><span class="material-symbols-outlined text-saffron-400 text-sm">call</span>+91 98765 43210</p>
+          <p class="flex items-center gap-2"><span class="material-symbols-outlined text-saffron-400 text-sm">schedule</span>7AM–9PM Daily</p>
+        </div>
+        <div class="mt-4 flex gap-2">
+          <span class="px-2 py-1 bg-gray-800 rounded text-xs">UPI</span>
+          <span class="px-2 py-1 bg-gray-800 rounded text-xs">Cash</span>
+          <span class="px-2 py-1 bg-gray-800 rounded text-xs">PhonePe</span>
+          <span class="px-2 py-1 bg-gray-800 rounded text-xs">GPay</span>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-gray-800 pt-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
+      <p>© 2024 Ganesh Shop. All rights reserved.</p>
+      <p>Made with ❤️ in Pune, Maharashtra</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ===================== DATA =====================
+const categories = [
+  { id:'grains',     name:'Grains & Pulses',     emoji:'🌾', color:'bg-yellow-50 border-yellow-200',  accent:'text-yellow-600' },
+  { id:'oil',        name:'Edible Oils',          emoji:'🫙', color:'bg-amber-50 border-amber-200',    accent:'text-amber-600'  },
+  { id:'spices',     name:'Spices & Masalas',     emoji:'🌶️', color:'bg-red-50 border-red-200',       accent:'text-red-600'    },
+  { id:'flour',      name:'Flour & Rava',         emoji:'🥣', color:'bg-orange-50 border-orange-200',  accent:'text-orange-600' },
+  { id:'sugar',      name:'Sugar & Salt',         emoji:'🧂', color:'bg-blue-50 border-blue-200',     accent:'text-blue-600'   },
+  { id:'snacks',     name:'Snacks & Namkeen',     emoji:'🍿', color:'bg-pink-50 border-pink-200',     accent:'text-pink-600'   },
+  { id:'biscuits',   name:'Biscuits & Bakery',    emoji:'🍪', color:'bg-rose-50 border-rose-200',     accent:'text-rose-600'   },
+  { id:'beverages',  name:'Beverages',            emoji:'☕', color:'bg-cyan-50 border-cyan-200',      accent:'text-cyan-700'   },
+  { id:'dairy',      name:'Dairy Products',       emoji:'🥛', color:'bg-sky-50 border-sky-200',       accent:'text-sky-600'    },
+  { id:'household',  name:'Household & Cleaning', emoji:'🧹', color:'bg-teal-50 border-teal-200',     accent:'text-teal-600'   },
+  { id:'personal',   name:'Personal Care',        emoji:'🧴', color:'bg-purple-50 border-purple-200', accent:'text-purple-600' },
+  { id:'packaged',   name:'Packaged Foods',       emoji:'📦', color:'bg-green-50 border-green-200',   accent:'text-green-600'  },
+];
+
+const products = [
+  // Grains & Pulses
+  { id:1,  name:'Basmati Rice (5kg)',       cat:'grains',    price:320,  mrp:360, emoji:'🌾', featured:true,  stock:true },
+  { id:2,  name:'Sona Masoori Rice (5kg)', cat:'grains',    price:240,  mrp:270, emoji:'🍚', featured:false, stock:true },
+  { id:3,  name:'Toor Dal (1kg)',           cat:'grains',    price:145,  mrp:160, emoji:'🫘', featured:true,  stock:true },
+  { id:4,  name:'Moong Dal (1kg)',          cat:'grains',    price:130,  mrp:148, emoji:'🫘', featured:false, stock:true },
+  { id:5,  name:'Chana Dal (1kg)',          cat:'grains',    price:110,  mrp:125, emoji:'🫘', featured:false, stock:true },
+  { id:6,  name:'Masoor Dal (1kg)',         cat:'grains',    price:100,  mrp:115, emoji:'🫘', featured:false, stock:true },
+  { id:7,  name:'Urad Dal (1kg)',           cat:'grains',    price:125,  mrp:140, emoji:'🫘', featured:false, stock:true },
+  { id:8,  name:'Rajma (500g)',             cat:'grains',    price:75,   mrp:85,  emoji:'🫘', featured:false, stock:true },
+  { id:9,  name:'Kabuli Chana (500g)',      cat:'grains',    price:70,   mrp:80,  emoji:'🫘', featured:false, stock:true },
+  { id:10, name:'Wheat (5kg)',              cat:'grains',    price:185,  mrp:200, emoji:'🌾', featured:false, stock:true },
+  // Oils
+  { id:11, name:'Sunflower Oil (1L)',       cat:'oil',       price:138,  mrp:155, emoji:'🌻', featured:true,  stock:true },
+  { id:12, name:'Groundnut Oil (1L)',       cat:'oil',       price:165,  mrp:185, emoji:'🥜', featured:false, stock:true },
+  { id:13, name:'Mustard Oil (1L)',         cat:'oil',       price:145,  mrp:165, emoji:'🫙', featured:true,  stock:true },
+  { id:14, name:'Coconut Oil (500ml)',      cat:'oil',       price:120,  mrp:140, emoji:'🥥', featured:false, stock:true },
+  { id:15, name:'Vanaspati Ghee (500g)',    cat:'oil',       price:185,  mrp:210, emoji:'🫙', featured:false, stock:true },
+  { id:16, name:'Refined Oil (5L)',         cat:'oil',       price:650,  mrp:720, emoji:'🛢️', featured:false, stock:true },
+  // Spices
+  { id:17, name:'Turmeric Powder (100g)',   cat:'spices',    price:30,   mrp:38,  emoji:'🌿', featured:true,  stock:true },
+  { id:18, name:'Red Chili Powder (100g)', cat:'spices',    price:35,   mrp:42,  emoji:'🌶️', featured:false, stock:true },
+  { id:19, name:'Coriander Powder (100g)', cat:'spices',    price:28,   mrp:35,  emoji:'🌿', featured:false, stock:true },
+  { id:20, name:'Garam Masala (100g)',      cat:'spices',    price:55,   mrp:65,  emoji:'🫙', featured:true,  stock:true },
+  { id:21, name:'Cumin Seeds (100g)',       cat:'spices',    price:40,   mrp:50,  emoji:'🌿', featured:false, stock:true },
+  { id:22, name:'Mustard Seeds (100g)',     cat:'spices',    price:22,   mrp:28,  emoji:'🌿', featured:false, stock:true },
+  { id:23, name:'Bay Leaves (50g)',         cat:'spices',    price:18,   mrp:25,  emoji:'🍃', featured:false, stock:true },
+  { id:24, name:'Black Pepper (50g)',       cat:'spices',    price:45,   mrp:58,  emoji:'🌿', featured:false, stock:true },
+  { id:25, name:'Cardamom (50g)',           cat:'spices',    price:65,   mrp:80,  emoji:'🫙', featured:false, stock:true },
+  { id:26, name:'Cloves (50g)',             cat:'spices',    price:55,   mrp:68,  emoji:'🌿', featured:false, stock:true },
+  // Flour
+  { id:27, name:'Wheat Atta (5kg)',         cat:'flour',     price:220,  mrp:245, emoji:'🌾', featured:true,  stock:true },
+  { id:28, name:'Maida (1kg)',              cat:'flour',     price:42,   mrp:50,  emoji:'🥣', featured:false, stock:true },
+  { id:29, name:'Besan (1kg)',              cat:'flour',     price:85,   mrp:98,  emoji:'🥣', featured:false, stock:true },
+  { id:30, name:'Sooji / Rava (500g)',      cat:'flour',     price:35,   mrp:42,  emoji:'🥣', featured:false, stock:true },
+  { id:31, name:'Rice Flour (500g)',        cat:'flour',     price:38,   mrp:45,  emoji:'🥣', featured:false, stock:true },
+  { id:32, name:'Ragi Flour (500g)',        cat:'flour',     price:55,   mrp:65,  emoji:'🥣', featured:false, stock:true },
+  // Sugar & Salt
+  { id:33, name:'Sugar (1kg)',              cat:'sugar',     price:45,   mrp:52,  emoji:'🍬', featured:true,  stock:true },
+  { id:34, name:'Iodized Salt (1kg)',       cat:'sugar',     price:22,   mrp:28,  emoji:'🧂', featured:false, stock:true },
+  { id:35, name:'Jaggery / Gud (500g)',     cat:'sugar',     price:48,   mrp:58,  emoji:'🍯', featured:false, stock:true },
+  { id:36, name:'Honey (250g)',             cat:'sugar',     price:95,   mrp:115, emoji:'🍯', featured:false, stock:true },
+  { id:37, name:'Tamarind (250g)',          cat:'sugar',     price:40,   mrp:50,  emoji:'🟤', featured:false, stock:true },
+  // Snacks
+  { id:38, name:'Lay\'s Chips (26g)',       cat:'snacks',    price:20,   mrp:20,  emoji:'🍟', featured:true,  stock:true },
+  { id:39, name:'Kurkure (65g)',            cat:'snacks',    price:20,   mrp:20,  emoji:'🌽', featured:false, stock:true },
+  { id:40, name:'Haldiram Mixture (200g)', cat:'snacks',    price:55,   mrp:60,  emoji:'🍿', featured:true,  stock:true },
+  { id:41, name:'Bhujia (200g)',            cat:'snacks',    price:45,   mrp:52,  emoji:'🍿', featured:false, stock:true },
+  { id:42, name:'Popcorn (50g)',            cat:'snacks',    price:20,   mrp:25,  emoji:'🍿', featured:false, stock:true },
+  { id:43, name:'Peanuts Masala (100g)',    cat:'snacks',    price:30,   mrp:35,  emoji:'🥜', featured:false, stock:true },
+  { id:44, name:'Chivda (200g)',            cat:'snacks',    price:40,   mrp:50,  emoji:'🍿', featured:false, stock:true },
+  // Biscuits
+  { id:45, name:'Parle-G (250g)',           cat:'biscuits',  price:20,   mrp:20,  emoji:'🍪', featured:true,  stock:true },
+  { id:46, name:'Britannia Good Day (100g)',cat:'biscuits',  price:35,   mrp:35,  emoji:'🍪', featured:false, stock:true },
+  { id:47, name:'Oreo Biscuits (120g)',     cat:'biscuits',  price:30,   mrp:30,  emoji:'🍪', featured:true,  stock:true },
+  { id:48, name:'Marie Gold (250g)',        cat:'biscuits',  price:28,   mrp:28,  emoji:'🍪', featured:false, stock:true },
+  { id:49, name:'Hide & Seek (100g)',       cat:'biscuits',  price:35,   mrp:35,  emoji:'🍪', featured:false, stock:true },
+  { id:50, name:'Cream Crackers (200g)',    cat:'biscuits',  price:40,   mrp:45,  emoji:'🍞', featured:false, stock:true },
+  // Beverages
+  { id:51, name:'Tata Tea (250g)',          cat:'beverages', price:110,  mrp:125, emoji:'☕', featured:true,  stock:true },
+  { id:52, name:'Brooke Bond (250g)',       cat:'beverages', price:105,  mrp:120, emoji:'🍵', featured:false, stock:true },
+  { id:53, name:'Bru Coffee (50g)',         cat:'beverages', price:65,   mrp:75,  emoji:'☕', featured:false, stock:true },
+  { id:54, name:'Horlicks (500g)',          cat:'beverages', price:245,  mrp:280, emoji:'🥤', featured:false, stock:true },
+  { id:55, name:'Coca-Cola (600ml)',        cat:'beverages', price:40,   mrp:40,  emoji:'🥤', featured:true,  stock:true },
+  { id:56, name:'Thums Up (600ml)',         cat:'beverages', price:40,   mrp:40,  emoji:'🥤', featured:false, stock:true },
+  { id:57, name:'Frooti Mango (200ml)',     cat:'beverages', price:20,   mrp:20,  emoji:'🥭', featured:false, stock:true },
+  { id:58, name:'Real Juice (1L)',          cat:'beverages', price:110,  mrp:125, emoji:'🧃', featured:false, stock:true },
+  { id:59, name:'Limca (600ml)',            cat:'beverages', price:40,   mrp:40,  emoji:'🥤', featured:false, stock:true },
+  // Dairy
+  { id:60, name:'Amul Milk (1L)',           cat:'dairy',     price:62,   mrp:62,  emoji:'🥛', featured:true,  stock:true },
+  { id:61, name:'Amul Butter (100g)',       cat:'dairy',     price:56,   mrp:58,  emoji:'🧈', featured:true,  stock:true },
+  { id:62, name:'Amul Ghee (500ml)',        cat:'dairy',     price:310,  mrp:345, emoji:'🫙', featured:false, stock:true },
+  { id:63, name:'Amul Curd (400g)',         cat:'dairy',     price:42,   mrp:45,  emoji:'🥣', featured:false, stock:true },
+  { id:64, name:'Amul Paneer (200g)',       cat:'dairy',     price:78,   mrp:85,  emoji:'🧀', featured:false, stock:true },
+  { id:65, name:'Cheese Slices (200g)',     cat:'dairy',     price:95,   mrp:110, emoji:'🧀', featured:false, stock:true },
+  // Household
+  { id:66, name:'Vim Bar (200g)',           cat:'household', price:22,   mrp:25,  emoji:'🧼', featured:false, stock:true },
+  { id:67, name:'Rin Detergent (1kg)',      cat:'household', price:98,   mrp:115, emoji:'🧹', featured:false, stock:true },
+  { id:68, name:'Ariel Detergent (1kg)',    cat:'household', price:185,  mrp:215, emoji:'🧺', featured:false, stock:true },
+  { id:69, name:'Surf Excel (500g)',        cat:'household', price:95,   mrp:110, emoji:'🧺', featured:true,  stock:true },
+  { id:70, name:'Domex Liquid (500ml)',     cat:'household', price:78,   mrp:90,  emoji:'🪣', featured:false, stock:true },
+  { id:71, name:'Phenyl (1L)',              cat:'household', price:60,   mrp:70,  emoji:'🫧', featured:false, stock:true },
+  { id:72, name:'Dettol Liquid (250ml)',    cat:'household', price:95,   mrp:110, emoji:'🧴', featured:false, stock:true },
+  { id:73, name:'Harpic (500ml)',           cat:'household', price:88,   mrp:100, emoji:'🪣', featured:false, stock:true },
+  // Personal Care
+  { id:74, name:'Dove Soap (100g)',         cat:'personal',  price:55,   mrp:60,  emoji:'🧼', featured:false, stock:true },
+  { id:75, name:'Lux Soap (100g)',          cat:'personal',  price:40,   mrp:45,  emoji:'🧼', featured:false, stock:true },
+  { id:76, name:'Colgate (200g)',           cat:'personal',  price:80,   mrp:90,  emoji:'🦷', featured:true,  stock:true },
+  { id:77, name:'Pepsodent (200g)',         cat:'personal',  price:72,   mrp:82,  emoji:'🦷', featured:false, stock:true },
+  { id:78, name:'Head & Shoulders (200ml)',cat:'personal',  price:185,  mrp:210, emoji:'🧴', featured:false, stock:true },
+  { id:79, name:'Pantene Shampoo (200ml)', cat:'personal',  price:175,  mrp:200, emoji:'🧴', featured:false, stock:true },
+  { id:80, name:'Parachute Hair Oil (200ml)',cat:'personal', price:105,  mrp:120, emoji:'🫙', featured:false, stock:true },
+  { id:81, name:'Fair & Lovely (50g)',      cat:'personal',  price:65,   mrp:75,  emoji:'🧴', featured:false, stock:true },
+  // Packaged Foods
+  { id:82, name:'Maggi Noodles (70g)',      cat:'packaged',  price:14,   mrp:14,  emoji:'🍜', featured:true,  stock:true },
+  { id:83, name:'Maggi Masala (12pk)',      cat:'packaged',  price:168,  mrp:168, emoji:'🍜', featured:false, stock:true },
+  { id:84, name:'Poha (500g)',              cat:'packaged',  price:38,   mrp:45,  emoji:'🍚', featured:false, stock:true },
+  { id:85, name:'Sabudana (500g)',          cat:'packaged',  price:55,   mrp:65,  emoji:'⚪', featured:false, stock:true },
+  { id:86, name:'Semiya / Vermicelli (200g)',cat:'packaged', price:28,   mrp:35,  emoji:'🍝', featured:false, stock:true },
+  { id:87, name:'Aloo Bhujia Pack (200g)', cat:'packaged',  price:48,   mrp:58,  emoji:'📦', featured:false, stock:true },
+  { id:88, name:'Pickle Mango (500g)',      cat:'packaged',  price:85,   mrp:100, emoji:'🥭', featured:false, stock:true },
+  { id:89, name:'Ketchup (1kg)',            cat:'packaged',  price:115,  mrp:135, emoji:'🍅', featured:true,  stock:true },
+  { id:90, name:'Soya Sauce (200ml)',       cat:'packaged',  price:55,   mrp:65,  emoji:'🫙', featured:false, stock:true },
+];
+
+// ===================== CART STATE =====================
+let cart = JSON.parse(localStorage.getItem('ganesh-cart') || '[]');
+let currentFilter = 'all';
+let currentSearch = '';
+let filteredProducts = [...products];
+
+// ===================== NAVIGATION =====================
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'products') renderAllProducts();
+}
+
+function setActive(el) {
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleMobileMenu() {
+  const m = document.getElementById('mobile-menu');
+  m.classList.toggle('hidden');
+}
+
+// ===================== RENDER HELPERS =====================
+function productCard(p, size='normal') {
+  const discount = p.mrp > p.price ? Math.round((p.mrp - p.price) / p.mrp * 100) : 0;
+  return `
+    <div class="product-card bg-white rounded-xl border border-orange-100 shadow-sm overflow-hidden flex flex-col">
+      <div class="bg-gradient-to-br from-orange-50 to-yellow-50 p-4 text-center">
+        <div class="text-4xl mb-1">${p.emoji}</div>
+        ${discount > 0 ? `<span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">${discount}% OFF</span>` : ''}
+      </div>
+      <div class="p-3 flex flex-col flex-1">
+        <h4 class="text-xs font-semibold text-gray-800 mb-1 leading-tight line-clamp-2">${p.name}</h4>
+        <div class="flex items-center gap-1 mt-auto mb-2">
+          <span class="text-saffron-600 font-bold text-sm">₹${p.price}</span>
+          ${p.mrp > p.price ? `<span class="text-gray-400 text-xs line-through">₹${p.mrp}</span>` : ''}
+        </div>
+        <button onclick="addToCart(${p.id})" class="w-full bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined text-sm">add_shopping_cart</span> Add
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function categoryCard(cat, small=false) {
+  return `
+    <div class="category-card bg-white ${cat.color} border rounded-xl p-4 text-center shadow-sm" onclick="filterAndShow('${cat.id}')">
+      <div class="text-3xl mb-2">${cat.emoji}</div>
+      <p class="text-xs font-semibold text-gray-700 leading-tight">${cat.name}</p>
+      <p class="text-xs ${cat.accent} mt-1">${products.filter(p=>p.cat===cat.id).length} items</p>
+    </div>
+  `;
+}
+
+function filterAndShow(catId) {
+  currentFilter = catId;
+  document.getElementById('category-filter').value = catId;
+  showSection('products');
+  renderAllProducts();
+}
+
+// ===================== RENDER SECTIONS =====================
+function renderHomePage() {
+  // Categories preview (first 6)
+  document.getElementById('home-categories').innerHTML = categories.slice(0,6).map(c => categoryCard(c)).join('');
+  // Featured products (first 10 featured)
+  const featured = products.filter(p => p.featured).slice(0,10);
+  document.getElementById('featured-products').innerHTML = featured.map(p => productCard(p)).join('');
+}
+
+function renderCategoriesPage() {
+  document.getElementById('all-categories').innerHTML = categories.map(c => categoryCard(c)).join('');
+}
+
+function renderAllProducts() {
+  let list = [...products];
+  if (currentFilter !== 'all') list = list.filter(p => p.cat === currentFilter);
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    list = list.filter(p => p.name.toLowerCase().includes(q));
+  }
+  const sort = document.getElementById('sort-filter').value;
+  if (sort === 'price-asc') list.sort((a,b) => a.price - b.price);
+  else if (sort === 'price-desc') list.sort((a,b) => b.price - a.price);
+  else if (sort === 'name-asc') list.sort((a,b) => a.name.localeCompare(b.name));
+
+  const catName = currentFilter === 'all' ? 'All Products' : categories.find(c=>c.id===currentFilter)?.name || 'Products';
+  document.getElementById('products-title').textContent = catName;
+  document.getElementById('products-subtitle').textContent = `Showing ${list.length} product${list.length !== 1 ? 's' : ''}`;
+
+  if (list.length === 0) {
+    document.getElementById('all-products').innerHTML = '';
+    document.getElementById('no-results').classList.remove('hidden');
+  } else {
+    document.getElementById('no-results').classList.add('hidden');
+    document.getElementById('all-products').innerHTML = list.map(p => productCard(p)).join('');
+  }
+}
+
+function renderFooterCategories() {
+  document.getElementById('footer-categories').innerHTML = categories.slice(0,6).map(c =>
+    `<li><a href="#" onclick="filterAndShow('${c.id}')" class="hover:text-saffron-400 transition-colors">${c.name}</a></li>`
+  ).join('');
+}
+
+function populateCategoryFilter() {
+  const sel = document.getElementById('category-filter');
+  categories.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+}
+
+// ===================== SEARCH =====================
+function handleSearch(val) {
+  currentSearch = val.trim();
+  currentFilter = 'all';
+  document.getElementById('category-filter').value = 'all';
+  renderAllProducts();
+}
+
+// ===================== FILTERS =====================
+function filterByCategory(val) {
+  currentFilter = val;
+  currentSearch = '';
+  document.getElementById('search-input').value = '';
+  const m = document.getElementById('search-mobile');
+  if (m) m.value = '';
+  renderAllProducts();
+}
+
+function sortProducts(val) { renderAllProducts(); }
+
+// ===================== CART =====================
+function saveCart() { localStorage.setItem('ganesh-cart', JSON.stringify(cart)); }
+
+function addToCart(id) {
+  const product = products.find(p => p.id === id);
+  if (!product) return;
+  const existing = cart.find(i => i.id === id);
+  if (existing) existing.qty += 1;
+  else cart.push({ ...product, qty: 1 });
+  saveCart();
+  updateCartUI();
+  showToast(`✅ ${product.name} added to cart!`);
+}
+
+function removeFromCart(id) {
+  cart = cart.filter(i => i.id !== id);
+  saveCart();
+  updateCartUI();
+  renderCartItems();
+}
+
+function updateQty(id, delta) {
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) { removeFromCart(id); return; }
+  saveCart();
+  updateCartUI();
+  renderCartItems();
+}
+
+function clearCart() {
+  if (!cart.length) return;
+  if (confirm('Clear all items from cart?')) {
+    cart = [];
+    saveCart();
+    updateCartUI();
+    renderCartItems();
+  }
+}
+
+function updateCartUI() {
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  document.getElementById('cart-total').textContent = `₹${total}`;
+  const badge = document.getElementById('cart-badge');
+  if (count > 0) { badge.textContent = count; badge.classList.remove('hidden'); }
+  else { badge.classList.add('hidden'); }
+}
+
+function renderCartItems() {
+  const container = document.getElementById('cart-items');
+  const emptyEl = document.getElementById('cart-empty');
+  const footerEl = document.getElementById('cart-footer');
+  if (cart.length === 0) {
+    container.innerHTML = '';
+    container.classList.add('hidden');
+    emptyEl.classList.remove('hidden');
+    footerEl.classList.add('hidden');
+    return;
+  }
+  container.classList.remove('hidden');
+  emptyEl.classList.add('hidden');
+  footerEl.classList.remove('hidden');
+  container.innerHTML = cart.map(item => `
+    <div class="bg-gray-50 rounded-xl p-3 flex items-center gap-3">
+      <div class="text-3xl">${item.emoji}</div>
+      <div class="flex-1 min-w-0">
+        <p class="text-xs font-semibold text-gray-800 leading-tight">${item.name}</p>
+        <p class="text-saffron-600 font-bold text-sm">₹${item.price} × ${item.qty} = ₹${item.price * item.qty}</p>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="updateQty(${item.id}, -1)" class="w-6 h-6 bg-gray-200 hover:bg-red-100 text-gray-700 rounded-full text-sm font-bold flex items-center justify-center">−</button>
+        <span class="w-6 text-center text-sm font-bold">${item.qty}</span>
+        <button onclick="updateQty(${item.id}, 1)" class="w-6 h-6 bg-gray-200 hover:bg-green-100 text-gray-700 rounded-full text-sm font-bold flex items-center justify-center">+</button>
+        <button onclick="removeFromCart(${item.id})" class="w-6 h-6 ml-1 text-red-400 hover:text-red-600 flex items-center justify-center">
+          <span class="material-symbols-outlined text-sm">delete</span>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openCart() {
+  renderCartItems();
+  document.getElementById('cart-drawer').classList.remove('closed');
+  document.getElementById('cart-drawer').classList.add('open');
+  document.getElementById('cart-overlay').classList.remove('opacity-0', 'pointer-events-none');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCart() {
+  document.getElementById('cart-drawer').classList.remove('open');
+  document.getElementById('cart-drawer').classList.add('closed');
+  document.getElementById('cart-overlay').classList.add('opacity-0', 'pointer-events-none');
+  document.body.style.overflow = '';
+}
+
+function checkout() {
+  if (cart.length === 0) { showToast('❌ Your cart is empty!'); return; }
+  const total = cart.reduce((s,i) => s + i.price * i.qty, 0);
+  let msg = `Hello Ganesh Shop! 🙏\n\nI'd like to place an order:\n\n`;
+  cart.forEach(i => { msg += `• ${i.name} × ${i.qty} = ₹${i.price * i.qty}\n`; });
+  msg += `\n*Total: ₹${total}*\nPlease confirm availability and delivery details. Thank you!`;
+  const url = `https://wa.me/919876543210?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+// ===================== TOAST =====================
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast bg-gray-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-lg pointer-events-auto';
+  el.textContent = msg;
+  const container = document.getElementById('toast-container');
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+// ===================== CONTACT FORM =====================
+function sendMessage(e) {
+  e.preventDefault();
+  showToast('✅ Message sent! We\'ll call you soon.');
+  e.target.reset();
+}
+
+// ===================== INIT =====================
+renderHomePage();
+renderCategoriesPage();
+renderFooterCategories();
+populateCategoryFilter();
+updateCartUI();
+</script>
+</body>
+</html>
